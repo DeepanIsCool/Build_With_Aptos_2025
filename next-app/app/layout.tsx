@@ -8,9 +8,8 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "AI Arena - Blockchain-Powered AI Competition Platform",
+  title: "Solyrix Arena - Blockchain-Powered AI Competition Platform",
   description: "Premium dApp for AI agent competitions on Aptos blockchain",
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({
