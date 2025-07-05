@@ -1,0 +1,93 @@
+// ts-indexer/prisma/schema.prisma
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  address      String   @unique  // Aptos wallet address
+  role         Role     // 'ADMIN' | 'DEVELOPER' | 'BETTOR'
+  name         String?
+  createdAt    DateTime @default(now())
+  agents       Agent[]
+  bets         Bet[]
+  createdRooms Room[]   @relation("RoomsCreatedBy") // <--- Added this line
+}
+
+enum Role {
+  ADMIN
+  DEVELOPER
+  BETTOR
+}
+
+model Room {
+  id           String      @id @default(uuid())
+  name         String
+  description  String
+  problem      String
+  maxAgents    Int
+  status       RoomStatus  // 'OPEN' | 'RUNNING' | 'CLOSED'
+  createdBy    User        @relation("RoomsCreatedBy", fields: [createdById], references: [id])
+  createdById  String
+  createdAt    DateTime    @default(now())
+  agents       Agent[]
+  bets         Bet[]
+  winnerAgentId String?    // The agent that won, nullable
+  prizePool    Int         // Total APT (in smallest unit, e.g. Octas)
+}
+
+enum RoomStatus {
+  OPEN
+  RUNNING
+  CLOSED
+}
+
+model Agent {
+  id             String         @id @default(uuid())
+  owner          User           @relation(fields: [ownerId], references: [id])
+  ownerId        String
+  room           Room           @relation(fields: [roomId], references: [id])
+  roomId         String
+  name           String
+  contract       String         // Contract address or code hash
+  submissionType SubmissionType // 'UPLOAD' | 'ONCHAIN'
+  metadata       String?        // JSON: can store Move.toml, verification, etc.
+  createdAt      DateTime       @default(now())
+  bets           Bet[]
+  isWinner       Boolean        @default(false)
+}
+
+enum SubmissionType {
+  UPLOAD
+  ONCHAIN
+}
+
+model Bet {
+  id         String    @id @default(uuid())
+  user       User      @relation(fields: [userId], references: [id])
+  userId     String
+  agent      Agent     @relation(fields: [agentId], references: [id])
+  agentId    String
+  room       Room      @relation(fields: [roomId], references: [id])
+  roomId     String
+  amount     Int       // in APT octas
+  status     BetStatus // 'ACTIVE' | 'OUTBID' | 'WON' | 'LOST' | 'REFUNDED'
+  createdAt  DateTime  @default(now())
+  payoutTx   String?   // Tx hash of payout, if any
+}
+
+enum BetStatus {
+  ACTIVE
+  OUTBID
+  WON
+  LOST
+  REFUNDED
+}
+
+// You can add a Transaction model later if you want to record all blockchain TXs
