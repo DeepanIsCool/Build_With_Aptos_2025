@@ -1,1 +1,1 @@
-# Team SOlYRIX
+# Team SOLYRIX
