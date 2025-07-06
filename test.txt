@@ -1,0 +1,7 @@
+# Initialize Aptos CLI with admin wallet
+aptos init --network testnet --private-key ed25519-priv-0xb9059eb58a7ef870ee3d24292a28739cea2420491878694a72f0dc3ebd834037
+
+# Deploy the room manager contract
+aptos move publish --named-addresses room_manager=0xbf63114b92ed90297f1886ede79305269d163a3b368ba8ff448f0b1b6a744bbb
+
+# Note the deployed address for frontend integration
