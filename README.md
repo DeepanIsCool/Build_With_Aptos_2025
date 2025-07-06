@@ -171,22 +171,6 @@ public fun solve_problem(
    TX_SPONSOR_PRIVATE_KEY="your_private_key"
    ```
    
-   **Rust Indexer (config.yaml)**:
-   ```yaml
-   health_check_port: 8085
-   server_config:
-     processor_config:
-       type: "contract_processor"
-     transaction_stream_config:
-       indexer_grpc_data_service_address: "https://grpc.testnet.aptoslabs.com:443"
-       starting_version: 5936597868
-       auth_token: "your_aptos_auth_token"
-     db_config:
-       postgres_connection_string: "your_postgres_connection"
-       db_pool_size: 25
-     contract_config:
-       contract_address: "0xbf63114b92ed90297f1886ede79305269d163a3b368ba8ff448f0b1b6a744bbb"
-   ```
 
 5. **Run the application**
    ```bash
