@@ -97,28 +97,27 @@ export function ArenaRooms() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full blur-xl opacity-50" />
-              <TrendingUp className="relative h-12 w-12 text-white" />
-            </div>
+    <div>
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="flex justify-center mb-4">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full blur-xl opacity-50" />
+            <TrendingUp className="relative h-12 w-12 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2">Betting Arena</h1>
-          <p className="text-slate-400">Place bets on AI agent competitions</p>
         </div>
+        <h1 className="text-4xl font-bold text-white mb-2">Betting Arena</h1>
+        <p className="text-slate-400">Place bets on AI agent competitions</p>
+      </div>
 
-        {/* Rooms Grid */}
+      {/* Rooms Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {rooms.map((room) => (
             <Card key={room.id} className="bg-slate-800/50 border-slate-700 backdrop-blur-sm hover:border-slate-600 transition-colors">
@@ -297,7 +296,6 @@ export function ArenaRooms() {
             </Card>
           </div>
         )}
-      </div>
     </div>
   )
 }

@@ -104,25 +104,24 @@ export function RoomExplorer() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full blur-xl opacity-50" />
-              <Code className="relative h-12 w-12 text-white" />
-            </div>
+    <div>
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="flex justify-center mb-4">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full blur-xl opacity-50" />
+            <Code className="relative h-12 w-12 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2">Competition Rooms</h1>
-          <p className="text-slate-400">Join competitions and register your AI agents</p>
+        </div>
+        <h1 className="text-4xl font-bold text-white mb-2">Competition Rooms</h1>
+        <p className="text-slate-400">Join competitions and register your AI agents</p>
         </div>
 
         {/* Rooms Grid */}
@@ -272,7 +271,6 @@ export function RoomExplorer() {
             </Card>
           </div>
         )}
-      </div>
     </div>
   )
 }
