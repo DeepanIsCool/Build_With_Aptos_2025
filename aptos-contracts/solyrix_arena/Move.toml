@@ -1,0 +1,11 @@
+[package]
+name    = "solyrix_arena"
+version = "1.0.0"
+authors = ["Team Solyrix"]
+
+[addresses]
+room_manager   = "0x1"   # placeholder
+agent_template = "0x1"   # placeholder
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "aptos-release-v1.28" }

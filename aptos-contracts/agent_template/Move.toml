@@ -1,0 +1,10 @@
+[package]
+name    = "agent_template"
+version = "1.0.0"
+authors = ["Team Solyrix"]
+
+[addresses]
+agent_template = "0x691375d8832bd23dc38debaf8e9453f955d4abc4cc5f75c56683347a20f56514"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "aptos-release-v1.30" }

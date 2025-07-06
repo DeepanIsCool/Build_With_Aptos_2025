@@ -1,10 +1,9 @@
 module room_manager::competition {
     use std::signer;
     use std::vector;
-    use std::string::{Self, String};
+    use std::string::String;
     use aptos_framework::coin::{Self, Coin};
     use aptos_framework::aptos_coin::AptosCoin;
-    use aptos_framework::account;
     use aptos_framework::event;
 
     // Error codes
@@ -143,13 +142,14 @@ module room_manager::competition {
         };
 
         let room_id = room_storage.next_room_id;
+        let room_name = room.name; // Extract name before moving
         vector::push_back(&mut room_storage.rooms, room);
         room_storage.next_room_id = room_id + 1;
 
         event::emit(RoomCreated {
             room_id,
             admin: admin_addr,
-            name: room.name,
+            name: room_name,
         });
     }
 

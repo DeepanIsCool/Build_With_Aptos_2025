@@ -45,10 +45,10 @@ module agent_template::solver {
     }
 
     // Solve a problem (main function called by competition)
-    public entry fun solve_problem(
+    public fun solve_problem(
         problem_input: String,
         agent_address: address,
-    ): Solution acquires Agent {
+    ): Solution {
         assert!(exists<Agent>(agent_address), E_AGENT_NOT_FOUND);
         
         // This is where the actual AI logic would go
@@ -121,7 +121,7 @@ module agent_template::solver {
 
     // Test function to verify agent can solve problems
     #[view]
-    public fun test_solve(problem_input: String, agent_address: address): (String, u8) acquires Agent {
+    public fun test_solve(problem_input: String, agent_address: address): (String, u8) {
         let solution = solve_problem(problem_input, agent_address);
         (solution.solution_output, solution.confidence)
     }

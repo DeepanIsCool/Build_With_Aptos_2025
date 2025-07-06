@@ -13,11 +13,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useWallet } from "@aptos-labs/wallet-adapter-react"
 
-interface WalletBarProps {
   userRole: "admin" | "developer" | "bettor"
 }
 
-export function WalletBar({ userRole }: WalletBarProps) {
   const { theme, setTheme } = useTheme()
   const {
     connected,

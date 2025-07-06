@@ -1,172 +1,303 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Trophy, Users, DollarSign, Activity, AlertTriangle, Plus, Eye, TrendingUp } from "lucide-react"
-import { mockAdminData } from "@/lib/mock-data"
+import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/hooks/use-toast"
+import { useSimpleWallet } from "@/lib/simple-wallet-context"
+import { Room } from "@/lib/room-service"
+import { Trophy, Users, DollarSign, Play, Crown, Eye, Zap } from "lucide-react"
 
 export function AdminDashboard() {
-  const { overview, alerts, quickStats } = mockAdminData
+  const { connectedUser } = useSimpleWallet()
+  const { toast } = useToast()
+  const [rooms, setRooms] = useState<Room[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchRooms()
+  }, [])
+
+  const fetchRooms = async () => {
+    try {
+      const response = await fetch('/api/rooms')
+      const result = await response.json()
+      if (result.success) {
+        setRooms(result.data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch rooms:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStartCompetition = async (roomId: number) => {
+    if (!connectedUser) return
+
+    try {
+      const response = await fetch(`/api/rooms/${roomId}/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          admin: connectedUser.address
+        }),
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        toast({
+          title: "Competition Started! 🚀",
+          description: `Competition in room ${roomId} is now running!`,
+        })
+        fetchRooms()
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to start competition",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleDeclareWinner = async (roomId: number, winnerAddress: string) => {
+    if (!connectedUser) return
+
+    try {
+      const response = await fetch(`/api/rooms/${roomId}/winner`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          winner: winnerAddress,
+          admin: connectedUser.address
+        }),
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        toast({
+          title: "Winner Declared! 👑",
+          description: `Competition completed successfully!`,
+        })
+        fetchRooms()
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to declare winner",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const getStateColor = (state: string) => {
+    switch (state) {
+      case 'OPEN': return 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+      case 'BETTING': return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
+      case 'RUNNING': return 'bg-green-500/20 text-green-300 border-green-500/30'
+      case 'FINISHED': return 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+      default: return 'bg-gray-500/20 text-gray-300 border-gray-500/30'
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Mission Control</h1>
-          <p className="text-slate-400">Platform health and management overview</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-pink-600 rounded-full blur-xl opacity-50" />
+              <Crown className="relative h-12 w-12 text-white" />
+            </div>
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-2">Admin Dashboard</h1>
+          <p className="text-slate-400">Manage competitions and oversee the arena</p>
         </div>
-        <div className="flex space-x-3">
-          <Button className="bg-red-600 hover:bg-red-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Create Room
-          </Button>
-          <Button variant="outline" className="border-white/20 hover:bg-white/10 bg-transparent">
-            <Eye className="w-4 h-4 mr-2" />
-            View All Rooms
-          </Button>
-        </div>
-      </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          {
-            title: "Total Rooms",
-            value: overview.totalRooms,
-            subtitle: `${overview.activeRooms} active`,
-            icon: Trophy,
-            color: "text-red-400",
-            bgColor: "bg-red-500/10",
-          },
-          {
-            title: "Total Agents",
-            value: overview.totalAgents,
-            subtitle: `${overview.activeBets} bets placed`,
-            icon: Users,
-            color: "text-blue-400",
-            bgColor: "bg-blue-500/10",
-          },
-          {
-            title: "Platform Earnings",
-            value: `${overview.platformEarnings} APT`,
-            subtitle: "+12% this week",
-            icon: DollarSign,
-            color: "text-green-400",
-            bgColor: "bg-green-500/10",
-          },
-          {
-            title: "Active Users",
-            value: overview.activeUsers,
-            subtitle: "Last 24h",
-            icon: Activity,
-            color: "text-purple-400",
-            bgColor: "bg-purple-500/10",
-          },
-        ].map((stat, index) => {
-          const Icon = stat.icon
-          return (
-            <Card
-              key={index}
-              className="bg-white/5 backdrop-blur-xl border-white/10 hover:bg-white/10 transition-all duration-300"
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-400 mb-1">{stat.title}</p>
-                    <p className="text-2xl font-bold text-white">{stat.value}</p>
-                    <p className="text-xs text-slate-500">{stat.subtitle}</p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                    <Icon className={`w-6 h-6 ${stat.color}`} />
-                  </div>
+        {/* Stats */}
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">Total Rooms</p>
+                  <p className="text-2xl font-bold text-white">{rooms.length}</p>
                 </div>
+                <Trophy className="h-8 w-8 text-purple-400" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">Active Competitions</p>
+                  <p className="text-2xl font-bold text-white">
+                    {rooms.filter(r => r.state === 'RUNNING').length}
+                  </p>
+                </div>
+                <Play className="h-8 w-8 text-green-400" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">Total Agents</p>
+                  <p className="text-2xl font-bold text-white">
+                    {rooms.reduce((acc, room) => acc + room.agents.length, 0)}
+                  </p>
+                </div>
+                <Users className="h-8 w-8 text-blue-400" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">Total Prize Pool</p>
+                  <p className="text-2xl font-bold text-white">
+                    {(rooms.reduce((acc, room) => acc + room.prizePool, 0) / 100000000).toFixed(2)} APT
+                  </p>
+                </div>
+                <DollarSign className="h-8 w-8 text-yellow-400" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Rooms */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold text-white mb-4">Competition Rooms</h2>
+          {rooms.length === 0 ? (
+            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+              <CardContent className="p-12 text-center">
+                <Trophy className="h-16 w-16 text-slate-600 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-2">No Rooms Yet</h3>
+                <p className="text-slate-400">Create your first competition room to get started!</p>
               </CardContent>
             </Card>
-          )
-        })}
+          ) : (
+            rooms.map((room) => (
+              <Card key={room.id} className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl text-white">{room.name}</CardTitle>
+                    <Badge className={getStateColor(room.state)}>
+                      {room.state}
+                    </Badge>
+                  </div>
+                  <p className="text-slate-400">{room.description}</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Agents:</span>
+                        <Badge variant="secondary" className="bg-blue-500/20 text-blue-300">
+                          {room.agents.length}/{room.maxAgents}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Bets:</span>
+                        <Badge variant="secondary" className="bg-green-500/20 text-green-300">
+                          {room.bets.length}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Prize Pool:</span>
+                        <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-300">
+                          {(room.prizePool / 100000000).toFixed(4)} APT
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-slate-400 text-sm mb-2">Problem:</p>
+                        <p className="text-white text-sm bg-slate-700/30 p-2 rounded">
+                          {room.problemStatement}
+                        </p>
+                      </div>
+                      {room.agents.length > 0 && (
+                        <div>
+                          <p className="text-slate-400 text-sm mb-2">Agents:</p>
+                          <div className="space-y-1">
+                            {room.agents.map((agent, idx) => (
+                              <div key={idx} className="flex items-center justify-between text-sm">
+                                <span className="text-white">{agent.name}</span>
+                                <span className="text-slate-400 font-mono">
+                                  {agent.developer.slice(0, 6)}...{agent.developer.slice(-4)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 mt-6">
+                    {room.state === 'BETTING' && room.bets.length > 0 && (
+                      <Button 
+                        onClick={() => handleStartCompetition(room.id)}
+                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                      >
+                        <Play className="h-4 w-4 mr-2" />
+                        Start Competition
+                      </Button>
+                    )}
+                    {room.state === 'RUNNING' && room.agents.length > 0 && (
+                      <div className="flex gap-2">
+                        {room.agents.map((agent, idx) => (
+                          <Button 
+                            key={idx}
+                            onClick={() => handleDeclareWinner(room.id, agent.address)}
+                            variant="outline"
+                            className="border-purple-500 text-purple-300 hover:bg-purple-500/20"
+                          >
+                            <Crown className="h-4 w-4 mr-2" />
+                            Declare {agent.name} Winner
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                    {room.state === 'FINISHED' && room.winner && (
+                      <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                        <Crown className="h-4 w-4 mr-2" />
+                        Winner: {room.agents.find(a => a.address === room.winner)?.name || 'Unknown'}
+                      </Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
       </div>
-
-      {/* System Status & Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* System Status */}
-        <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center">
-              <Activity className="w-5 h-5 mr-2 text-green-400" />
-              System Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300">Network</span>
-              <Badge className="bg-green-500/20 text-green-300 border-green-500/30">Testnet Live</Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300">Last Block</span>
-              <span className="text-white font-mono">#1,234,567</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300">Platform Wallet</span>
-              <span className="text-white font-mono">0xabcd...1234</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300">Uptime</span>
-              <span className="text-green-400">99.9%</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Alerts Center */}
-        <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center">
-              <AlertTriangle className="w-5 h-5 mr-2 text-yellow-400" />
-              Alerts Center
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {alerts.map((alert, index) => (
-              <div key={index} className="flex items-start space-x-3 p-3 rounded-lg bg-white/5 border border-white/10">
-                <div
-                  className={`w-2 h-2 rounded-full mt-2 ${
-                    alert.type === "warning" ? "bg-yellow-400" : alert.type === "error" ? "bg-red-400" : "bg-blue-400"
-                  }`}
-                />
-                <div className="flex-1">
-                  <p className="text-sm text-white">{alert.message}</p>
-                  <p className="text-xs text-slate-400">{alert.time}</p>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Stats */}
-      <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2 text-purple-400" />
-            Platform Analytics
-          </CardTitle>
-          <CardDescription>Real-time platform performance metrics</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {quickStats.map((stat, index) => (
-              <div key={index} className="text-center p-4 rounded-lg bg-white/5 border border-white/10">
-                <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
-                <div className="text-sm text-slate-400 mb-2">{stat.label}</div>
-                <div className={`text-xs ${stat.change.startsWith("+") ? "text-green-400" : "text-red-400"}`}>
-                  {stat.change}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

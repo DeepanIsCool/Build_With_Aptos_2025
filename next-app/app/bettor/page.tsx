@@ -1,12 +1,9 @@
 "use client"
 
-import { BettorDashboard } from "@/components/bettor/bettor-dashboard"
-import { BettorLayout } from "@/components/bettor/bettor-layout"
+"use client"
+
+import { ArenaRooms } from "@/components/bettor/arena-rooms"
 
 export default function BettorPage() {
-  return (
-    <BettorLayout>
-      <BettorDashboard />
-    </BettorLayout>
-  )
+  return <ArenaRooms />
 }

@@ -1,262 +1,303 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Progress } from "@/components/ui/progress"
-import { Search, Users, DollarSign, Clock, Trophy, TrendingUp, Zap, Eye } from "lucide-react"
-import { mockRooms, mockFeaturedAgents } from "@/lib/mock-data"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
+import { useSimpleWallet } from "@/lib/simple-wallet-context"
+import { Room } from "@/lib/room-service"
+import { Trophy, Users, DollarSign, Target, TrendingUp, Zap } from "lucide-react"
 
 export function ArenaRooms() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const { connectedUser } = useSimpleWallet()
+  const { toast } = useToast()
+  const [rooms, setRooms] = useState<Room[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
+  const [selectedAgent, setSelectedAgent] = useState<string>("")
+  const [betAmount, setBetAmount] = useState<string>("500000")
+  const [isBetting, setIsBetting] = useState(false)
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "open":
-        return "bg-green-500/20 text-green-300 border-green-500/30"
-      case "running":
-        return "bg-blue-500/20 text-blue-300 border-blue-500/30"
-      case "ended":
-        return "bg-gray-500/20 text-gray-300 border-gray-500/30"
-      case "paused":
-        return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
-      default:
-        return "bg-gray-500/20 text-gray-300 border-gray-500/30"
+  useEffect(() => {
+    fetchRooms()
+  }, [])
+
+  const fetchRooms = async () => {
+    try {
+      const response = await fetch('/api/rooms')
+      const result = await response.json()
+      if (result.success) {
+        setRooms(result.data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch rooms:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const filteredRooms = mockRooms.filter((room) => {
-    const matchesSearch =
-      room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      room.task.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || room.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+  const handlePlaceBet = async () => {
+    if (!connectedUser || !selectedRoom || !selectedAgent) return
+
+    setIsBetting(true)
+    try {
+      const response = await fetch(`/api/rooms/${selectedRoom.id}/bets`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bettor: connectedUser.address,
+          agentAddress: selectedAgent,
+          amount: parseInt(betAmount)
+        }),
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        toast({
+          title: "Bet Placed! 🎯",
+          description: `Successfully bet ${(parseInt(betAmount) / 100000000).toFixed(4)} APT!`,
+        })
+        setSelectedRoom(null)
+        setSelectedAgent("")
+        setBetAmount("500000")
+        fetchRooms()
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      toast({
+        title: "Bet Failed",
+        description: "Failed to place bet. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsBetting(false)
+    }
+  }
+
+  const getStateColor = (state: string) => {
+    switch (state) {
+      case 'OPEN': return 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+      case 'BETTING': return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
+      case 'RUNNING': return 'bg-green-500/20 text-green-300 border-green-500/30'
+      case 'FINISHED': return 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+      default: return 'bg-gray-500/20 text-gray-300 border-gray-500/30'
+    }
+  }
+
+  const canBet = (room: Room) => {
+    return room.state === 'BETTING' && room.agents.length > 0
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Arena Rooms</h1>
-          <p className="text-slate-400">Live AI competitions ready for betting</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full blur-xl opacity-50" />
+              <TrendingUp className="relative h-12 w-12 text-white" />
+            </div>
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-2">Betting Arena</h1>
+          <p className="text-slate-400">Place bets on AI agent competitions</p>
         </div>
-        <Button className="bg-green-600 hover:bg-green-700">
-          <TrendingUp className="w-4 h-4 mr-2" />
-          My Active Bets
-        </Button>
-      </div>
 
-      {/* Featured Agents Carousel */}
-      <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/30">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center">
-            <Zap className="w-5 h-5 mr-2 text-green-400" />
-            Hot Bets & Featured Agents
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {mockFeaturedAgents.map((agent, index) => (
-              <div
-                key={index}
-                className="p-4 rounded-lg bg-white/10 border border-white/20 hover:bg-white/15 transition-colors cursor-pointer group"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-white group-hover:text-green-300 transition-colors">
-                    {agent.name}
-                  </h4>
-                  <Badge
-                    className={
-                      agent.category === "hot"
-                        ? "bg-red-500/20 text-red-300 border-red-500/30"
-                        : agent.category === "highest"
-                          ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
-                          : "bg-blue-500/20 text-blue-300 border-blue-500/30"
-                    }
-                  >
-                    {agent.category === "hot" ? "🔥 Hot" : agent.category === "highest" ? "💰 High Odds" : "👑 Popular"}
+        {/* Rooms Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {rooms.map((room) => (
+            <Card key={room.id} className="bg-slate-800/50 border-slate-700 backdrop-blur-sm hover:border-slate-600 transition-colors">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg text-white">{room.name}</CardTitle>
+                  <Badge className={getStateColor(room.state)}>
+                    {room.state}
                   </Badge>
                 </div>
-                <p className="text-sm text-slate-300 mb-2">{agent.room}</p>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400">
-                    Current Odds: <span className="text-white font-semibold">{agent.odds}</span>
-                  </span>
-                  <span className="text-green-400 font-semibold">{agent.bets} bets</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Filters */}
-      <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                placeholder="Search arenas by name or challenge..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-slate-400"
-              />
-            </div>
-            <div className="flex gap-2">
-              {["all", "open", "running", "ending-soon"].map((status) => (
-                <Button
-                  key={status}
-                  variant={statusFilter === status ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter(status)}
-                  className={statusFilter === status ? "bg-green-600" : "border-white/20 hover:bg-white/10"}
-                >
-                  {status === "ending-soon" ? "Ending Soon" : status.charAt(0).toUpperCase() + status.slice(1)}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Arena Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredRooms.map((room) => {
-          const slotsProgress = (room.agentsJoined / room.maxAgents) * 100
-          const isLive = room.status === "running"
-          const canBet = room.status === "open" || room.status === "running"
-
-          return (
-            <Card
-              key={room.id}
-              className="bg-white/5 backdrop-blur-xl border-white/10 hover:bg-white/10 transition-all duration-300 group relative overflow-hidden"
-            >
-              {/* Live indicator */}
-              {isLive && (
-                <div className="absolute top-4 right-4 z-10">
-                  <Badge className="bg-red-500/20 text-red-300 border-red-500/30 animate-pulse">🔴 LIVE</Badge>
-                </div>
-              )}
-
-              {/* Arena visual effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-              <CardHeader className="pb-3 relative z-10">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg text-white mb-2 group-hover:text-green-300 transition-colors">
-                      {room.name}
-                    </CardTitle>
-                    <p className="text-sm text-slate-400 line-clamp-2">{room.task}</p>
-                  </div>
-                  <Badge className={getStatusColor(room.status)}>{room.status}</Badge>
-                </div>
+                <p className="text-slate-400 text-sm">{room.description}</p>
               </CardHeader>
-
-              <CardContent className="space-y-4 relative z-10">
-                {/* Arena Stats */}
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="p-2 rounded-lg bg-white/5 border border-white/10">
-                    <Trophy className="w-4 h-4 text-yellow-400 mx-auto mb-1" />
-                    <div className="text-sm font-semibold text-white">{room.prizePool}</div>
-                    <div className="text-xs text-slate-400">APT Prize</div>
+              <CardContent>
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-400">Agents:</span>
+                    <Badge variant="secondary" className="bg-blue-500/20 text-blue-300">
+                      {room.agents.length}/{room.maxAgents}
+                    </Badge>
                   </div>
-                  <div className="p-2 rounded-lg bg-white/5 border border-white/10">
-                    <Users className="w-4 h-4 text-blue-400 mx-auto mb-1" />
-                    <div className="text-sm font-semibold text-white">
-                      {room.agentsJoined}/{room.maxAgents}
-                    </div>
-                    <div className="text-xs text-slate-400">Agents</div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-400">Prize Pool:</span>
+                    <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-300">
+                      {(room.prizePool / 100000000).toFixed(4)} APT
+                    </Badge>
                   </div>
-                  <div className="p-2 rounded-lg bg-white/5 border border-white/10">
-                    <Clock className="w-4 h-4 text-purple-400 mx-auto mb-1" />
-                    <div className="text-sm font-semibold text-white">{room.timeLeft}</div>
-                    <div className="text-xs text-slate-400">Time Left</div>
-                  </div>
-                </div>
-
-                {/* Agent Slots Progress */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs text-slate-400">
-                    <span>Competition Progress</span>
-                    <span>
-                      {room.agentsJoined}/{room.maxAgents} agents
-                    </span>
-                  </div>
-                  <Progress value={slotsProgress} className="h-2" />
-                </div>
-
-                {/* Betting Pool Info */}
-                <div className="p-3 rounded-lg bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm text-green-300 font-semibold">Total Betting Pool</div>
-                      <div className="text-lg font-bold text-white">{room.bettingPool || "1,250"} APT</div>
-                    </div>
-                    <TrendingUp className="w-6 h-6 text-green-400" />
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-400">Total Bets:</span>
+                    <Badge variant="secondary" className="bg-purple-500/20 text-purple-300">
+                      {room.bets.length}
+                    </Badge>
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 border-white/20 hover:bg-white/10 bg-transparent"
-                  >
-                    <Eye className="w-4 h-4 mr-1" />
-                    View Details
-                  </Button>
-                  {canBet ? (
-                    <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700">
-                      <DollarSign className="w-4 h-4 mr-1" />
-                      Place Bet
-                    </Button>
-                  ) : (
-                    <Button size="sm" disabled className="flex-1">
-                      Betting Closed
-                    </Button>
-                  )}
+                <div className="bg-slate-700/30 rounded p-3 mb-4">
+                  <p className="text-slate-400 text-xs mb-1">Problem:</p>
+                  <p className="text-white text-sm">{room.problemStatement}</p>
                 </div>
 
-                {/* Live betting indicator */}
-                {isLive && (
-                  <div className="text-center pt-2 border-t border-white/10">
-                    <div className="text-xs text-green-400 flex items-center justify-center">
-                      <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse" />
-                      Live betting active
+                {room.agents.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-slate-400 text-xs mb-2">Competing Agents:</p>
+                    <div className="space-y-2">
+                      {room.agents.map((agent, idx) => (
+                        <div key={idx} className="bg-slate-700/20 rounded p-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-white font-medium">{agent.name}</span>
+                            <span className="text-slate-400 font-mono">
+                              {agent.developer.slice(0, 6)}...{agent.developer.slice(-4)}
+                            </span>
+                          </div>
+                          <p className="text-slate-400 text-xs mt-1">{agent.description}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
+
+                <Button 
+                  onClick={() => setSelectedRoom(room)}
+                  disabled={!canBet(room)}
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50"
+                >
+                  {canBet(room) ? (
+                    <>
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Place Bet
+                    </>
+                  ) : room.state === 'OPEN' ? (
+                    "Waiting for Agents"
+                  ) : room.state === 'RUNNING' ? (
+                    "Competition Running"
+                  ) : room.state === 'FINISHED' ? (
+                    "Competition Finished"
+                  ) : (
+                    "Betting Closed"
+                  )}
+                </Button>
               </CardContent>
             </Card>
-          )
-        })}
-      </div>
+          ))}
+        </div>
 
-      {filteredRooms.length === 0 && (
-        <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-          <CardContent className="p-12 text-center">
-            <Trophy className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">No Arenas Found</h3>
-            <p className="text-slate-400 mb-6">No competitions match your current filters</p>
-            <Button
-              onClick={() => {
-                setSearchTerm("")
-                setStatusFilter("all")
-              }}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              Clear Filters
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+        {rooms.length === 0 && (
+          <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+            <CardContent className="p-12 text-center">
+              <Trophy className="h-16 w-16 text-slate-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">No Rooms Available</h3>
+              <p className="text-slate-400">Check back later for new competitions!</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Betting Modal */}
+        {selectedRoom && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <Card className="bg-slate-800 border-slate-700 w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="text-white">Place Bet on {selectedRoom.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-white">Select Agent</Label>
+                  <div className="space-y-2 mt-2">
+                    {selectedRoom.agents.map((agent, idx) => (
+                      <div 
+                        key={idx}
+                        className={`p-3 rounded border cursor-pointer transition-colors ${
+                          selectedAgent === agent.address 
+                            ? 'border-green-500 bg-green-500/10' 
+                            : 'border-slate-600 hover:border-slate-500'
+                        }`}
+                        onClick={() => setSelectedAgent(agent.address)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-white font-medium">{agent.name}</span>
+                          <span className="text-slate-400 text-xs font-mono">
+                            {agent.developer.slice(0, 6)}...{agent.developer.slice(-4)}
+                          </span>
+                        </div>
+                        <p className="text-slate-400 text-sm mt-1">{agent.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="betAmount" className="text-white">Bet Amount (Octas)</Label>
+                  <Input
+                    id="betAmount"
+                    type="number"
+                    value={betAmount}
+                    onChange={(e) => setBetAmount(e.target.value)}
+                    min={selectedRoom.minBet}
+                    max={selectedRoom.maxBet}
+                    className="bg-slate-700/50 border-slate-600 text-white"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">
+                    ≈ {(parseInt(betAmount || "0") / 100000000).toFixed(4)} APT
+                    <br />
+                    Range: {(selectedRoom.minBet / 100000000).toFixed(2)} - {(selectedRoom.maxBet / 100000000).toFixed(2)} APT
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={handlePlaceBet}
+                    disabled={isBetting || !selectedAgent || !betAmount}
+                    className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                  >
+                    {isBetting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Placing Bet...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-4 w-4 mr-2" />
+                        Place Bet
+                      </>
+                    )}
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setSelectedRoom(null)
+                      setSelectedAgent("")
+                      setBetAmount("500000")
+                    }}
+                    variant="outline"
+                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

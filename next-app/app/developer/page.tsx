@@ -1,12 +1,9 @@
 "use client"
 
-import { DeveloperDashboard } from "@/components/developer/developer-dashboard"
-import { DeveloperLayout } from "@/components/developer/developer-layout"
+"use client"
+
+import { RoomExplorer } from "@/components/developer/room-explorer"
 
 export default function DeveloperPage() {
-  return (
-    <DeveloperLayout>
-      <DeveloperDashboard />
-    </DeveloperLayout>
-  )
+  return <RoomExplorer />
 }
