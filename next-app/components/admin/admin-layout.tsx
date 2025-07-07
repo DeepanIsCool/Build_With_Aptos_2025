@@ -24,7 +24,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen">
       {/* Top Bar */}
       <TopBar 
         title="Admin Panel"
@@ -34,7 +34,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       />
 
       {/* Navigation */}
-      <div className="border-b border-slate-700 bg-slate-800/30 backdrop-blur-sm">
+      <div className="border-b border-slate-700/50 bg-slate-800/20 backdrop-blur-md glass">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-8">
             {navigation.map((item) => {

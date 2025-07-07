@@ -11,7 +11,7 @@ interface DeveloperLayoutProps {
 
 export function DeveloperLayout({ children }: DeveloperLayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900/20 to-slate-900">
+    <div className="min-h-screen">
       {/* Top Bar */}
       <TopBar 
         title="Developer Panel"

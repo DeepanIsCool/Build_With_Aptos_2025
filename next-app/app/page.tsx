@@ -101,10 +101,12 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen relative">
+      {/* Subtle overlay for uniform appearance */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/5 to-transparent pointer-events-none" />
+      
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-800/20 to-pink-800/20" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
           <div className="text-center">
             <div className="flex justify-center mb-8">
@@ -142,7 +144,7 @@ export default function LandingPage() {
       </div>
 
       {/* Role Selection */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Choose Your Role
@@ -158,7 +160,7 @@ export default function LandingPage() {
             return (
               <Card 
                 key={role.id}
-                className="relative group cursor-pointer transition-all duration-300 hover:scale-105 bg-slate-800/50 border-slate-700 hover:border-slate-600 backdrop-blur-sm"
+                className="relative group cursor-pointer transition-all duration-300 hover:scale-105 bg-slate-800/40 border-slate-700/50 hover:border-slate-600/60 backdrop-blur-md glass-strong"
                 onClick={() => handleRoleSelect(role.id)}
               >
                 <div className={`absolute inset-0 bg-gradient-to-r ${role.color} opacity-0 group-hover:opacity-10 rounded-lg transition-opacity duration-300`} />
@@ -200,7 +202,7 @@ export default function LandingPage() {
 
       {/* Enhanced Wallet Selection Modal */}
       <Dialog open={showWalletModal} onOpenChange={setShowWalletModal}>
-        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-md">
+        <DialogContent className="bg-slate-800/90 border-slate-700/60 text-white max-w-md backdrop-blur-lg glass-strong">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-center">
               Connect as {(selectedRole ? selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1) : "")}
@@ -226,7 +228,7 @@ export default function LandingPage() {
               {selectedRole && users[selectedRole as keyof typeof users].map((user, index) => (
                 <Card 
                   key={index}
-                  className="cursor-pointer transition-all duration-200 hover:scale-105 bg-slate-700/50 border-slate-600 hover:border-purple-500"
+                  className="cursor-pointer transition-all duration-200 hover:scale-105 bg-slate-700/40 border-slate-600/50 hover:border-purple-500/60 backdrop-blur-sm glass"
                   onClick={() => handleDemoWalletSelect(user)}
                 >
                   <CardContent className="p-4">
@@ -256,7 +258,7 @@ export default function LandingPage() {
                 </p>
               </div>
               
-              <Card className="bg-slate-700/30 border-slate-600">
+              <Card className="bg-slate-700/30 border-slate-600/50 backdrop-blur-sm glass">
                 <CardContent className="p-6 text-center">
                   <div className="flex justify-center mb-4">
                     <div className="relative">

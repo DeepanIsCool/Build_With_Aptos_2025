@@ -33,7 +33,7 @@ export function TopBar({ title, roleColor, roleBadgeColor, roleIcon: RoleIcon }:
   }
 
   return (
-    <div className="border-b border-slate-700 bg-slate-800/50 backdrop-blur-sm">
+    <div className="border-b border-slate-700/50 bg-slate-800/30 backdrop-blur-md glass">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
@@ -50,7 +50,7 @@ export function TopBar({ title, roleColor, roleBadgeColor, roleIcon: RoleIcon }:
           
           <div className="flex items-center gap-4">
             {connectedUser && (
-              <Card className="bg-slate-700/50 border-slate-600 px-3 py-2">
+              <Card className="bg-slate-700/40 border-slate-600/50 px-3 py-2 backdrop-blur-sm glass">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                   <span className="text-white text-sm font-medium">{connectedUser.name}</span>
@@ -64,7 +64,7 @@ export function TopBar({ title, roleColor, roleBadgeColor, roleIcon: RoleIcon }:
               onClick={handleLogout}
               variant="outline" 
               size="sm"
-              className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              className="border-slate-600/50 text-slate-300 hover:bg-slate-700/50 backdrop-blur-sm"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Logout
